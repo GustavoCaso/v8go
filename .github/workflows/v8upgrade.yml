@@ -24,23 +24,26 @@ jobs:
               run: echo "$PATH"
             - name: Fetch V8
               run: cd deps && fetch v8 || true
-            - name: Get latest stable version of v8
-              id: v8_latest
-              run: echo ::set-output name=V8LATEST::$(curl -sS 'https://omahaproxy.appspot.com/all.json?os=linux&channel=stable' | jq '.[0]["versions"][0]["v8_commit"]')
-            - name: Print latest stable version of v8
-              run: echo "${{steps.v8_latest.outputs.V8LATEST}}"
-            - name: Display v8 branch info
-              run: cd deps/v8 && git show ${{steps.v8_latest.outputs.V8LATEST}}
-            - name: Swicth v8 to stable branch
-              run: cd deps/v8 && git fetch && git checkout ${{steps.v8_latest.outputs.V8LATEST}}
+            - name: Get latest v8 version info
+              id: v8_latest_version
+              run: echo ::set-output name=VALUE::$(curl -sS 'https://omahaproxy.appspot.com/all.json?os=linux&channel=stable' | jq '.[0]["versions"][0]')
+            - name: Checkout v8 to stable commit ref
+              run: cd deps/v8 && git fetch && git checkout $COMMIT_REF
+              env:
+                COMMIT_REF: $(echo ${{steps.v8_latest_version.outputs.VALUE}} | jq -r .v8_commit)
             - name: Copy deps/v8/include into deps/include
               run: cp -r deps/v8/include/* deps/include/
+            - name: Create PR metadata
+              id: pr_metadata
+              run: |
+                echo ::set-output name=pr_branch::"v_${V8_VERSION}_upgrade"
+              env:
+                V8_VERSION: $(echo ${{steps.v8_latest_version.outputs.VALUE}} | jq -r .v8_version)
             - name: Create PR
               uses: peter-evans/create-pull-request@v3
               with:
-                commit-message: Update V8 binaries
-                branch: update-v8-binary
-                branch-suffix: random
+                commit-message: Upgrade V8 binaries
+                branch: ${{steps.pr_metadata.outputs.pr_branch}}
                 delete-branch: true
                 title: Upgrade V8 binary
                 body: Auto-generated pull request to upgarde V8 binary
