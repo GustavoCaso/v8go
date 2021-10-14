@@ -3,7 +3,7 @@ name: V8 Build
 on:
   pull_request:
     branches:
-      - v8_*_upgrade
+      - v8_upgrade/**
 
 jobs:
     build:

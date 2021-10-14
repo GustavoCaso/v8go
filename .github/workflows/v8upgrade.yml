@@ -26,7 +26,7 @@ jobs:
             - name: Create PR metadata
               id: pr_metadata
               run: |
-                echo ::set-output name=pr_branch::"v8_$(cat deps/v8_version)_upgrade"
+                echo ::set-output name=pr_branch::"v8_upgrade/$(cat deps/v8_version)"
             - name: Create PR
               uses: peter-evans/create-pull-request@v3
               with:
