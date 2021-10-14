@@ -1,8 +1,6 @@
 name: V8 Upgrade
 
-on:
-  schedule:
-    - cron: '0 0 * * *' # Run every day
+on: workflow_dispatch
 
 jobs:
     upgrade:
@@ -16,7 +14,7 @@ jobs:
                   fetch-depth: 0
             - uses: actions/setup-python@v2
               with:
-                python-version: '3.8'
+                python-version: '>=3.8'
             - name: Update depot_tools fetch config
               run: cd deps/depot_tools && git config --unset-all remote.origin.fetch; git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
               shell: bash
