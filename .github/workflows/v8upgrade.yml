@@ -30,6 +30,7 @@ jobs:
             - name: Create PR
               uses: peter-evans/create-pull-request@v3
               with:
+                token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
                 commit-message: Upgrade V8 binaries
                 branch: ${{steps.pr_metadata.outputs.pr_branch}}
                 delete-branch: true
