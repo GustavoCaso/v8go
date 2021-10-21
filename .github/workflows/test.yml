@@ -2,8 +2,8 @@ name: CI
 
 on:
   push:
-    branches:
-      - master
+    branches-ignore:
+      - v8_upgrade/**
   pull_request:
   workflow_dispatch:
 

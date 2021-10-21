@@ -2,6 +2,9 @@ name: V8 Build
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - v8_upgrade/**
 
 jobs:
     build:
