@@ -5,8 +5,9 @@ on:
     branches:
       - master
   pull_request:
-    branches-ignore:
-      - v8_upgrade/**
+    branches:
+      - 'master'    # matches refs/heads/master
+      - '!v8_upgrade/**'   # excludes refs/heads/depbot
   workflow_dispatch:
 
 jobs:
