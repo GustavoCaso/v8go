@@ -37,7 +37,7 @@ jobs:
                 commit-message: Upgrade V8 binaries
                 branch: ${{steps.pr_metadata.outputs.pr_branch}}
                 delete-branch: true
-                base: v8_upgrades
+                base: v8-upgrades
                 title: Upgrade V8 binary
                 body: Auto-generated pull request to upgrade V8 binary
 
