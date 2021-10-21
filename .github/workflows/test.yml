@@ -3,8 +3,10 @@ name: CI
 on:
   push:
     branches-ignore:
-      - v8_upgrade/**
+      - v8_upgrades
   pull_request:
+      branches-ignore:
+        - v8_upgrades
   workflow_dispatch:
 
 jobs:
