@@ -2,11 +2,9 @@ name: CI
 
 on:
   push:
-    branches-ignore:
-      - v8-upgrades
+    branches:
+      - master
   pull_request:
-      branches-ignore:
-        - v8-upgrades
   workflow_dispatch:
 
 jobs:
