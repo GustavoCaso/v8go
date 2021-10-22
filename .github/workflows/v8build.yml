@@ -8,6 +8,7 @@ on:
 
 jobs:
     build:
+        if: "!contains(github.event.commits[0].message, '[skip_build_workflow]')"
         name: Build V8 for ${{ matrix.platform }}
         strategy:
             fail-fast: false
@@ -42,7 +43,7 @@ jobs:
             - name: Create PR
               uses: peter-evans/create-pull-request@v3
               with:
-                commit-message: Update V8 static library for ${{ matrix.platform  }}
+                commit-message: "[skip_build_workflow] Update V8 static library for ${{ matrix.platform  }}"
                 branch: v8-lib
                 branch-suffix: random
                 delete-branch: true
