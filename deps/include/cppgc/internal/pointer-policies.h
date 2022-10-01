@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "cppgc/internal/member-storage.h"
 #include "cppgc/internal/write-barrier.h"
 #include "cppgc/sentinel-pointer.h"
 #include "cppgc/source-location.h"
@@ -27,15 +28,34 @@ class WeakMemberTag;
 class UntracedMemberTag;
 
 struct DijkstraWriteBarrierPolicy {
-  static void InitializingBarrier(const void*, const void*) {
+  V8_INLINE static void InitializingBarrier(const void*, const void*) {
     // Since in initializing writes the source object is always white, having no
     // barrier doesn't break the tri-color invariant.
   }
-  static void AssigningBarrier(const void* slot, const void* value) {
+
+  V8_INLINE static void AssigningBarrier(const void* slot, const void* value) {
     WriteBarrier::Params params;
-    switch (WriteBarrier::GetWriteBarrierType(slot, value, params)) {
+    const WriteBarrier::Type type =
+        WriteBarrier::GetWriteBarrierType(slot, value, params);
+    WriteBarrier(type, params, slot, value);
+  }
+
+  V8_INLINE static void AssigningBarrier(const void* slot,
+                                         MemberStorage storage) {
+    WriteBarrier::Params params;
+    const WriteBarrier::Type type =
+        WriteBarrier::GetWriteBarrierType(slot, storage, params);
+    WriteBarrier(type, params, slot, storage.Load());
+  }
+
+ private:
+  V8_INLINE static void WriteBarrier(WriteBarrier::Type type,
+                                     const WriteBarrier::Params& params,
+                                     const void* slot, const void* value) {
+    switch (type) {
       case WriteBarrier::Type::kGenerational:
-        WriteBarrier::GenerationalBarrier(params, slot);
+        WriteBarrier::GenerationalBarrier<
+            WriteBarrier::GenerationalBarrierType::kPreciseSlot>(params, slot);
         break;
       case WriteBarrier::Type::kMarking:
         WriteBarrier::DijkstraMarkingBarrier(params, value);
@@ -47,8 +67,9 @@ struct DijkstraWriteBarrierPolicy {
 };
 
 struct NoWriteBarrierPolicy {
-  static void InitializingBarrier(const void*, const void*) {}
-  static void AssigningBarrier(const void*, const void*) {}
+  V8_INLINE static void InitializingBarrier(const void*, const void*) {}
+  V8_INLINE static void AssigningBarrier(const void*, const void*) {}
+  V8_INLINE static void AssigningBarrier(const void*, MemberStorage) {}
 };
 
 class V8_EXPORT SameThreadEnabledCheckingPolicyBase {
@@ -89,22 +110,22 @@ class V8_EXPORT SameThreadEnabledCheckingPolicy
 
 class DisabledCheckingPolicy {
  protected:
-  void CheckPointer(const void*) {}
+  V8_INLINE void CheckPointer(const void*) {}
 };
 
-#if V8_ENABLE_CHECKS
+#ifdef DEBUG
 // Off heap members are not connected to object graph and thus cannot ressurect
 // dead objects.
 using DefaultMemberCheckingPolicy =
     SameThreadEnabledCheckingPolicy<false /* kCheckOffHeapAssignments*/>;
 using DefaultPersistentCheckingPolicy =
     SameThreadEnabledCheckingPolicy<true /* kCheckOffHeapAssignments*/>;
-#else
+#else   // !DEBUG
 using DefaultMemberCheckingPolicy = DisabledCheckingPolicy;
 using DefaultPersistentCheckingPolicy = DisabledCheckingPolicy;
-#endif
+#endif  // !DEBUG
 // For CT(W)P neither marking information (for value), nor objectstart bitmap
-// (for slot) are guaranteed to be present because there's no synchonization
+// (for slot) are guaranteed to be present because there's no synchronization
 // between heaps after marking.
 using DefaultCrossThreadPersistentCheckingPolicy = DisabledCheckingPolicy;
 
